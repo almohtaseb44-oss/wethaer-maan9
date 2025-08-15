@@ -103,11 +103,9 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
 }
 </style>
 </head>
-<body>
-
-<header class="topbar">
+<body><header class="topbar">
   <div class="container row">
-    <div class="brand">—</div>
+    <div class="brand">طقس محافظة معان</div>
   </div>
 </header>
 
@@ -171,23 +169,11 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
       <div class="alert-list" id="alertList"></div>
     </div>
 
-    <!-- التنبيهات الجوية مصغرة -->
-    <div>
-      <div class="card weather-warning" style="padding:10px 14px; width:max-content;">
-        <h3 style="font-size:16px;">التنبيهات الجوية</h3>
-        <div class="warning-content" style="display:flex;align-items:center;gap:8px; font-size:14px;">
-          <div id="warningCircle" class="alert-circle" style="width:30px; height:30px; font-size:16px;">!</div>
-          <div id="warningText" style="font-weight:600;">—</div>
-        </div>
-      </div>
-
-      <!-- مربع AI أسفل التنبيهات -->
-      <div class="card ai-weather-chat" style="margin-top:10px; padding:14px;">
-        <h3 style="font-size:16px;">اسأل عن الطقس</h3>
-        <input type="text" id="aiQuestion" placeholder="اكتب سؤالك هنا..." 
-               style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
-        <button class="btn" style="margin-top:6px;" onclick="askAI()">اسأل</button>
-        <div id="aiAnswer" style="margin-top:8px; font-weight:600;"></div>
+    <div class="card weather-warning">
+      <h3>التنبيهات الجوية</h3>
+      <div class="warning-content" style="display:flex;align-items:center;gap:12px;">
+        <div id="warningCircle" class="alert-circle">!</div>
+        <div id="warningText" style="font-weight:600;">—</div>
       </div>
     </div>
   </div>
@@ -197,15 +183,29 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
 
 <script>
 const $ = id => document.getElementById(id);
+
 function showSpinner(){ $('temp').innerHTML='<div class="spinner"></div>'; $('errorBox').innerHTML=''; }
 function showError(msg){ $('errorBox').innerHTML=`<div class="error">${msg}</div>`; }
 
+// جميع المدن الأردنية للبحث
 const cities = {
   'Maan': {lat:30.1949, lon:35.734, name:'معان'},
   'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال'},
   'Tafileh': {lat:30.85, lon:35.56, name:'الطفيلة'},
   'Aqaba': {lat:29.53, lon:35.01, name:'العقبة'},
-  'Karak': {lat:31.18, lon:35.70, name:'الكرك'}
+  'Karak': {lat:31.18, lon:35.70, name:'الكرك'},
+  'Amman': {lat:31.95, lon:35.93, name:'عمان'},
+  'Irbid': {lat:32.55, lon:35.85, name:'إربد'},
+  'Zarqa': {lat:32.07, lon:36.09, name:'الزرقاء'},
+  'Madaba': {lat:31.72, lon:35.79, name:'مادبا'},
+  'Jerash': {lat:32.28, lon:35.89, name:'جرش'},
+  'Ajloun': {lat:32.33, lon:35.75, name:'عجلون'},
+  'Mafraq': {lat:32.35, lon:36.21, name:'المفرق'},
+  'Balqa': {lat:32.00, lon:35.72, name:'البلقاء'},
+  'KarakCity': {lat:31.18, lon:35.70, name:'الكرك'},
+  'TafilaCity': {lat:30.85, lon:35.56, name:'الطفيلة'},
+  'Ma\'anCity': {lat:30.20, lon:35.73, name:'معان'},
+  'AqabaCity': {lat:29.53, lon:35.01, name:'العقبة'}
 };
 
 const alertDefinitions = [
@@ -214,8 +214,7 @@ const alertDefinitions = [
   {code:[45,48], icon:'🌫', class:'alert-dust', text:'مغبر/ضباب — رؤية منخفضة'},
   {code:[51,53,55,61,63,65,80,81,82], icon:'🌧', class:'alert-rain', text:'مطر — احتمال أمطار'},
   {code:[71,73,75,77,85,86], icon:'❄', class:'alert-snow', text:'ثلج — احتمال تساقط ثلوج'},
-  {code:[95,96,99], icon:'⛈', class:'alert-storm', text:'عاصفة — رياح قوية أو عواصف رعدية'},
-  {code:[96,99], icon:'🚨', class:'alert-danger', text:'تحذير شديد — ظروف جوية خطيرة جداً'}
+  {code:[95,96,99], icon:'⛈', class:'alert-storm', text:'عاصفة — رياح قوية أو عواصف رعدية'}
 ];
 
 function iconFromCode(code){
@@ -249,15 +248,29 @@ async function runCity(key){
     }
 }
 
-// أيقونات الطقس وشرح مختصر
 const detailedWeatherText = {
-    0: 'مشمس وصافي.', 1:'سماء صافية مع بعض الشمس.',2:'غيوم جزئية، فترات مشمسة.',3:'غائم جزئي إلى كلي.',
-    45:'ضباب أو غبار خفيف.',48:'ضباب كثيف، الحذر أثناء القيادة.',51:'أمطار خفيفة متفرقة.',
-    53:'أمطار متوسطة متفرقة.',55:'أمطار غزيرة محتملة.',61:'أمطار خفيفة إلى متوسطة.',
-    63:'أمطار متوسطة قد تصحبها رياح.',65:'أمطار غزيرة، تجنب المناطق المنخفضة.',71:'ثلوج خفيفة.',
-    73:'ثلوج متوسطة، طرق زلقة.',75:'ثلوج كثيفة، البقاء في المنزل.',77:'تساقط ثلوج أو برد كثيف.',
-    80:'أمطار متفرقة خلال اليوم.',81:'أمطار محتملة على فترات.',82:'أمطار غزيرة محتملة.',
-    95:'عواصف رعدية محتملة.',96:'عاصفة رعدية مع رياح قوية.',99:'ظروف جوية خطيرة جداً، تجنب الخروج.'
+    0: 'مشمس.',
+    1: 'سماء صافية.',
+    2: 'غيوم جزئية.',
+    3: 'غائم جزئي.',
+    45: 'ضباب أو غبار.',
+    48: 'ضباب كثيف.',
+    51: 'أمطار خفيفة.',
+    53: 'أمطار متوسطة.',
+    55: 'أمطار غزيرة.',
+    61: 'أمطار خفيفة إلى متوسطة.',
+    63: 'أمطار متوسطة.',
+    65: 'أمطار غزيرة.',
+    71: 'ثلوج خفيفة.',
+    73: 'ثلوج متوسطة.',
+    75: 'ثلوج كثيفة.',
+    77: 'تساقط ثلوج أو برد.',
+    80: 'أمطار متفرقة.',
+    81: 'أمطار محتملة.',
+    82: 'أمطار غزيرة محتملة.',
+    95: 'عواصف رعدية محتملة.',
+    96: 'عاصفة رعدية مع رياح.',
+    99: 'ظروف جوية خطيرة.'
 };
 
 function renderWeather(cityName, data){
@@ -269,44 +282,47 @@ function renderWeather(cityName, data){
     $('wind').textContent = `${cw.windspeed} م/ث`;
     $('winddir').textContent = `${cw.winddirection}°`;
 
-    $('sunrise').textContent = new Date(data.daily.sunrise[0]).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
-    $('sunset').textContent = new Date(data.daily.sunset[0]).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
-    $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0])+'°C';
-    $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0])+'°C';
-
     const {icon, bgClass, text} = iconFromCode(cw.weathercode);
-    const iconDiv = $('icon'); iconDiv.textContent = icon; iconDiv.className = 'iconBox ' + bgClass;
-    const warningCircle = $('warningCircle'); warningCircle.textContent = icon; warningCircle.className = 'alert-circle ' + bgClass;
+    const iconDiv = $('icon');
+    iconDiv.textContent = icon;
+    iconDiv.className = 'iconBox ' + bgClass;
+
+    const warningCircle = $('warningCircle');
+    warningCircle.textContent = icon;
+    warningCircle.className = 'alert-circle ' + bgClass;
     $('warningText').textContent = text;
 
     renderAlerts(cw.weathercode);
 
-    const daysBox = $('days'); daysBox.innerHTML='';
-    const usedNames = {};
+    // تفاصيل إضافية
+    $('sunrise').textContent = data.daily.sunrise[0].split('T')[1];
+    $('sunset').textContent = data.daily.sunset[0].split('T')[1];
+    $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0])+'°C';
+    $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0])+'°C';
+
+    const daysBox = $('days');
+    daysBox.innerHTML = '';
     for(let i=0;i<5;i++){
         const dayName = new Date(data.daily.time[i]).toLocaleDateString('ar',{weekday:'short'});
-        const uniqueName = usedNames[dayName]? dayName+i : dayName;
-        usedNames[dayName]=true;
         const max = Math.round(data.daily.temperature_2m_max[i]);
-        const min = Math.round(data.daily.temperature_2m_min[i]);const code = data.daily.weathercode[i];
+        const min = Math.round(data.daily.temperature_2m_min[i]);
+        const code = data.daily.weathercode[i];
         const {icon:icode, bgClass:dayBg} = iconFromCode(code);
 
-        // عرض اليوم مع أيقونة + درجات الحرارة + شرح عند المرور
-        daysBox.innerHTML += `
-        <div class="day" title="${detailedWeatherText[code]}">
+        daysBox.innerHTML += `<div class="day" title="${detailedWeatherText[code]}">
             <div class="w ${dayBg}">${icode}</div>
-            <div>${uniqueName}</div>
+            <div>${dayName}</div>
             <div>${max}° / ${min}°</div>
         </div>`;
     }
 }
 
-// بحث المدينة عند الكتابة
+// بحث المدن
 const searchInput = $('citySearch');
 const suggestionsBox = $('suggestions');
 
 searchInput.addEventListener('input', ()=>{
-    const val = searchInput.value.trim().toLowerCase();
+    const val = searchInput.value.trim();
     suggestionsBox.innerHTML = '';
     if(!val){ suggestionsBox.style.display='none'; return; }
     const matches = Object.keys(cities).filter(c=>cities[c].name.includes(val));
@@ -330,18 +346,6 @@ $('searchBtn').addEventListener('click', ()=>{
 
 // افتراضي عند فتح الصفحة
 runCity('Maan');
-
-// وظيفة الذكاء الاصطناعي البسيط (كمثال) تحت التنبيهات
-function askAI(){
-    const q = $('aiQuestion').value.trim();
-    if(!q){ $('aiAnswer').textContent = 'اكتب سؤالك أولاً'; return; }
-    // مثال: ردود ثابتة بسيطة حسب الكلمات
-    let ans = 'لا أعلم، حاول سؤال آخر.';
-    if(q.includes('مطر')) ans = 'من المتوقع أمطار خفيفة.';
-    else if(q.includes('حرارة')) ans = `الحرارة الحالية ${$('temp').textContent}.`;
-    else if(q.includes('ثلج')) ans = 'احتمال تساقط ثلوج خفيف.';
-    $('aiAnswer').textContent = ans;
-}
 </script>
 
 </body>
