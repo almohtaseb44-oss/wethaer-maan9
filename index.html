@@ -195,10 +195,8 @@ const cities = {
   'Tafileh': {lat:30.85, lon:35.56, name:'الطفيلة'},
   'Aqaba': {lat:29.53, lon:35.01, name:'العقبة'},
   'Karak': {lat:31.18, lon:35.70, name:'الكرك'},
-  'Hammerfest': {lat:70.6633, lon:23.6829, name:'هامرفست، النرويج'}
+  'Delhi': {lat:28.7041, lon:77.1025, name:'دلّي، الهند'} // إضافة دلّي
 };
-
-// بقية المدن الأردنية كلها ممكن تضيفها هنا للبحث بدون زر إضافي
 
 const alertDefinitions = [
   {code:[0,1], icon:'☀', class:'alert-sunny', text:'مشمس — الطقس صافي'},
@@ -242,11 +240,11 @@ async function runCity(key){
 }
 
 const detailedWeatherText = {
-    0: 'مشمس.',
-    1: 'صافي مع الشمس.',
+    0: 'مشمس وصافي.',
+    1: 'سماء صافية.',
     2: 'غيوم جزئية.',
-    3: 'غائم جزئي.',
-    45: 'ضباب/غبار خفيف.',
+    3: 'غائم جزئي إلى كلي.',
+    45: 'ضباب أو غبار خفيف.',
     48: 'ضباب كثيف.',
     51: 'أمطار خفيفة.',
     53: 'أمطار متوسطة.',
@@ -259,7 +257,7 @@ const detailedWeatherText = {
     75: 'ثلوج كثيفة.',
     77: 'تساقط ثلوج أو برد.',
     80: 'أمطار متفرقة.',
-    81: 'أمطار محتملة على فترات.',
+    81: 'أمطار محتملة.',
     82: 'أمطار غزيرة محتملة.',
     95: 'عواصف رعدية محتملة.',
     96: 'عاصفة رعدية قوية.',
@@ -275,13 +273,11 @@ function renderWeather(cityName, data){
     $('wind').textContent = `${cw.windspeed} م/ث`;
     $('winddir').textContent = `${cw.winddirection}°`;
 
-    // دائرة أيقونة الطقس الحالية
     const {icon, bgClass, text} = iconFromCode(cw.weathercode);
     const iconDiv = $('icon');
     iconDiv.textContent = icon;
     iconDiv.className = 'iconBox ' + bgClass;
 
-    // دائرة التنبيه الأحمر مع شرح الحالة
     const warningCircle = $('warningCircle');
     warningCircle.textContent = icon;
     warningCircle.className = 'alert-circle ' + bgClass;
@@ -289,13 +285,11 @@ function renderWeather(cityName, data){
 
     renderAlerts(cw.weathercode);
 
-    // تفاصيل إضافية
-    $('sunrise').textContent = data.daily.sunrise[0].slice(11,16);
-    $('sunset').textContent = data.daily.sunset[0].slice(11,16);
-    $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0])+'°C';
-    $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0])+'°C';
+    $('sunrise').textContent = data.daily.sunrise[0].split("T")[1];
+    $('sunset').textContent = data.daily.sunset[0].split("T")[1];
+    $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0]) + "°C";
+    $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0]) + "°C";
 
-    // الأيام الخمسة
     const daysBox = $('days');
     daysBox.innerHTML = '';
     for(let i=0;i<5;i++){
@@ -313,46 +307,35 @@ function renderWeather(cityName, data){
     }
 }
 
-// بحث المدينة
 const searchInput = $('citySearch');
 const suggestionsBox = $('suggestions');
 
 searchInput.addEventListener('input', ()=>{
     const val = searchInput.value.trim().toLowerCase();
     suggestionsBox.innerHTML = '';
-    if(!val){ suggestionsBox.style.display='none';return; }
-    const matches = Object.keys(cities).filter(key => cities[key].name.toLowerCase().includes(val));
-    if(matches.length === 0){ suggestionsBox.style.display='none'; return; }
-    matches.forEach(key => {
-        const div = document.createElement('div');
-        div.textContent = cities[key].name;
-        div.addEventListener('click', ()=>{
-            searchInput.value = cities[key].name;
-            suggestionsBox.style.display='none';
-            runCity(key);
+    if(!val){ suggestionsBox.style.display='none'; return; }
+    const matches = Object.keys(cities).filter(c=>cities[c].name.toLowerCase().includes(val));
+    if(matches.length){
+        matches.forEach(m=>{
+            const div = document.createElement('div');
+            div.textContent = cities[m].name;
+            div.onclick = ()=>{ runCity(m); suggestionsBox.style.display='none'; searchInput.value=''; }
+            suggestionsBox.appendChild(div);
         });
-        suggestionsBox.appendChild(div);
-    });
-    suggestionsBox.style.display='block';
+        suggestionsBox.style.display='block';
+    }else{ suggestionsBox.style.display='none'; }
 });
 
-// زر البحث
-$('searchBtn').addEventListener('click', ()=>{
+$('searchBtn').addEventListener('click',()=>{ 
     const val = searchInput.value.trim().toLowerCase();
-    const matchKey = Object.keys(cities).find(key => cities[key].name.toLowerCase() === val);
-    if(matchKey){ runCity(matchKey); }
-    else { showError('المدينة غير موجودة'); }
+    const match = Object.keys(cities).find(c=>cities[c].name.toLowerCase() === val);
+    if(match){ runCity(match); searchInput.value=''; suggestionsBox.style.display='none'; }
+    else{ showError('المنطقة غير موجودة'); }
 });
 
-// الضغط خارج قائمة الاقتراحات لإخفائها
-document.addEventListener('click', (e)=>{
-    if(!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)){
-        suggestionsBox.style.display='none';
-    }
-});
-
-// تحميل مدينة افتراضية عند بداية الصفحة
+// تحميل تلقائي للمدينة الرئيسية
 runCity('Maan');
 </script>
+
 </body>
 </html>
