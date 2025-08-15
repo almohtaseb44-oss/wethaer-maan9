@@ -90,9 +90,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
   padding:10px;
   cursor:pointer;
 }
-.search-suggestions div:hover{
-  background:#f0f0f0;
-}
+.search-suggestions div:hover{ background:#f0f0f0;}
 @media(max-width:900px){
   .grid{grid-template-columns:1fr}
   .now{grid-template-columns:1fr}
@@ -101,10 +99,12 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
   .header-box{flex-direction:column;align-items:flex-start;gap:6px}
   .alert-section{grid-template-columns:1fr!important;}
 }
+.shortcuts{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;}
+.shortcut{padding:6px 10px;background:#f8fafc;border-radius:12px;cursor:pointer;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.shortcut:hover{background:var(--soft);}
 </style>
 </head>
 <body>
-
 <header class="topbar">
   <div class="container row">
     <div class="brand">—</div>
@@ -112,26 +112,25 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
 </header>
 
 <main class="container">
-
   <div class="header-box">
     <div class="title">طقس محافظة معان</div>
     <div class="home">الصفحة الرئيسية</div>
   </div>
 
-  <div class="buttons">
-    <span class="muted" style="font-weight:700;margin-right:10px;">المناطق الجنوبية:</span>
-    <button class="btn" onclick="runCity('Maan')">معان</button>
-    <button class="btn" onclick="runCity('Tafileh')">الطفيلة</button>
-    <button class="btn" onclick="runCity('Aqaba')">العقبة</button>
-    <button class="btn" onclick="runCity('Karak')">الكرك</button>
-    <button class="btn" onclick="runCity('HusseinUni')">جامعة الحسين بن طلال</button>
-  </div>
-
   <div style="position:relative; margin-top:12px; display:flex; gap:6px;">
-    <input id="citySearch" type="text" placeholder="اكتب اسم المنطقة" 
+    <input id="citySearch" type="text" placeholder="اكتب اسم المنطقة أو الجامعة"   
            style="padding:10px; border-radius:12px; border:1px solid #ccc; flex:1;">
     <button id="searchBtn" class="btn" style="flex:none;">بحث</button>
     <div id="suggestions" class="search-suggestions" style="display:none;"></div>
+  </div>
+
+  <!-- اختصارات المناطق الجنوبية -->
+  <div class="shortcuts">
+    <div class="shortcut" onclick="runCity('Maan')">معان</div>
+    <div class="shortcut" onclick="runCity('Karak')">الكرك</div>
+    <div class="shortcut" onclick="runCity('Tafileh')">الطفيلة</div>
+    <div class="shortcut" onclick="runCity('Aqaba')">العقبة</div>
+    <div class="shortcut" onclick="runCity('HusseinUni')">جامعة الحسين بن طلال</div>
   </div>
 
   <div class="grid">
@@ -142,6 +141,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
         <div class="item"><span class="muted">غروب الشمس</span><strong id="sunset">--:--</strong></div>
         <div class="item"><span class="muted">أعلى درجة اليوم</span><strong id="temp_max">--°C</strong></div>
         <div class="item"><span class="muted">أدنى درجة اليوم</span><strong id="temp_min">--°C</strong></div>
+        <div class="item"><span class="muted">ارتفاع المنطقة</span><strong id="elevation">-- متر</strong></div>
       </div>
     </aside>
 
@@ -160,8 +160,12 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
           </div>
         </div>
       </div>
+
       <h3 style="margin-top:10px">توقعات 5 أيام</h3>
       <div class="days" id="days"></div>
+
+      <h3 style="margin-top:20px;">الرسم البياني لدرجات الحرارة</h3>
+      <canvas id="tempChart" height="150"></canvas>
     </section>
   </div>
 
@@ -183,6 +187,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
   <footer>تم التطوير بواسطة أحمد المحتسب</footer>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -190,35 +195,12 @@ function showSpinner(){ $('temp').innerHTML='<div class="spinner"></div>'; $('er
 function showError(msg){ $('errorBox').innerHTML=`<div class="error">${msg}</div>`; }
 
 const cities = {
-  // المدن الأردنية
-  'Amman': {lat:31.95, lon:35.93, name:'عمان'},
-  'Zarqa': {lat:32.07, lon:36.09, name:'الزرقاء'},
-  'Irbid': {lat:32.55, lon:35.85, name:'إربد'},
-  'Madaba': {lat:31.72, lon:35.79, name:'مادبا'},
-  'Ajloun': {lat:32.33, lon:35.75, name:'عجلون'},
-  'Jerash': {lat:32.28, lon:35.90, name:'جرش'},
-  'Mafraq': {lat:32.35, lon:36.21, name:'المفرق'},
-  'Balqa': {lat:32.0, lon:35.73, name:'البلقاء'},
-  'Maan': {lat:30.1949, lon:35.734, name:'معان'},
-  'Tafileh': {lat:30.85, lon:35.56, name:'الطفيلة'},
-  'Aqaba': {lat:29.53, lon:35.01, name:'العقبة'},
-  'Karak': {lat:31.18, lon:35.70, name:'الكرك'},
-
-  // الجامعات الأردنية
-  'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال'},
-  'UniversityOfJordan': {lat:31.9522, lon:35.9106, name:'جامعة الأردن'},
-  'JordanUniversityOfScience': {lat:31.9522, lon:35.9106, name:'جامعة العلوم والتكنولوجيا الأردنية'},
-  'Yarmouk': {lat:32.5556, lon:35.8500, name:'جامعة اليرموك'},
-  'Mutah': {lat:31.3115, lon:35.7520, name:'جامعة مؤتة'},
-  'AlBalqaApplied': {lat:32.0, lon:35.73, name:'جامعة البلقاء التطبيقية'},
-  'Hashemite': {lat:32.0, lon:36.07, name:'الجامعة الهاشمية'},
-  'AlZaytoonah': {lat:31.95, lon:35.92, name:'جامعة الزيتونة'},
-  'Philadelphia': {lat:31.94, lon:35.91, name:'جامعة فيلادلفيا'},
-  'GermanJordanian': {lat:31.95, lon:35.92, name:'الجامعة الأردنية الألمانية'},
-  'AmericanJordan': {lat:31.95, lon:35.91, name:'الجامعة الأمريكية في الأردن'},
-
-  // فيربانكس
-  'Fairbanks': {lat:64.8378, lon:-147.7164, name:'فيربانكس', searchName:'Fairbanks'}
+  'Maan': {lat:30.1949, lon:35.734, name:'معان', elevation:930},
+  'Tafileh': {lat:30.85, lon:35.56, name:'الطفيلة', elevation:970},
+  'Aqaba': {lat:29.53, lon:35.01, name:'العقبة', elevation:5},
+  'Karak': {lat:31.18, lon:35.70, name:'الكرك', elevation:900},
+  'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال', elevation:935}
+  // أضف باقي المدن والجامعات إذا أردت لاحقًا
 };
 
 const alertDefinitions = [
@@ -256,7 +238,7 @@ async function runCity(key){
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset&current_weather=true&timezone=auto`;
         const res = await fetch(url);
         const data = await res.json();
-        renderWeather(city.name, data);
+        renderWeather(city, data);
     }catch(e){
         showError(e.message);
     }
@@ -287,19 +269,20 @@ const detailedWeatherText = {
     99: 'ظروف جوية خطيرة.'
 };
 
-function renderWeather(cityName, data){
+function renderWeather(city, data){
     const cw = data.current_weather;
-    $('place').textContent = cityName;
+    $('place').textContent = city.name;
     $('temp').textContent = `${Math.round(cw.temperature)}°C`;
     $('apparent').textContent = `${Math.round(cw.temperature)}°C`;
     $('humidity').textContent = '--';
     $('wind').textContent = `${cw.windspeed} م/ث`;
     $('winddir').textContent = `${cw.winddirection}°`;
+    $('elevation').textContent = `${city.elevation} متر`;
 
     const {icon, bgClass, text} = iconFromCode(cw.weathercode);
     const iconDiv = $('icon');
     iconDiv.textContent = icon;
-    iconDiv.className ='iconBox ' + bgClass;
+    iconDiv.className = 'iconBox ' + bgClass;
 
     const warningCircle = $('warningCircle');
     warningCircle.textContent = icon;
@@ -326,39 +309,66 @@ function renderWeather(cityName, data){
             <div class="w ${dayBg}">${icode}</div>
             <div>${dayName}</div>
             <div>${max}° / ${min}°</div>
-        </div>`;
+        </</div>`;
     }
+
+    // رسم البياني باستخدام Chart.js
+    const ctx = document.getElementById('tempChart').getContext('2d');
+    const labels = data.daily.time.map(d => new Date(d).toLocaleDateString('ar',{weekday:'short', day:'numeric'}));
+    const tempMax = data.daily.temperature_2m_max;
+    const tempMin = data.daily.temperature_2m_min;
+
+    if(window.tempChartInstance) window.tempChartInstance.destroy(); // لتجنب تراكب الرسوم
+    window.tempChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {label:'أعلى درجة', data: tempMax, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.2)', tension:0.4},
+                {label:'أدنى درجة', data: tempMin, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.2)', tension:0.4}
+            ]
+        },
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{position:'top', labels:{usePointStyle:true, pointStyle:'circle', padding:15}},
+                tooltip:{mode:'index', intersect:false}
+            },
+            interaction:{mode:'nearest', axis:'x', intersect:false},
+            scales:{
+                y:{beginAtZero:false, title:{display:true, text:'درجة الحرارة °C'}},
+                x:{title:{display:true, text:'اليوم'}}
+            }
+        }
+    });
 }
 
-const searchInput = $('citySearch');
-const suggestionsBox = $('suggestions');
+// البحث عبر الإدخال
+$('searchBtn').addEventListener('click',()=>{
+    const val = $('citySearch').value.trim();
+    if(cities[val]) runCity(val);
+    else showError('المنطقة غير موجودة ضمن الاختصارات.');
+});
 
-searchInput.addEventListener('input', ()=>{
-    const val = searchInput.value.trim().toLowerCase();
-    suggestionsBox.innerHTML = '';
-    if(!val){ suggestionsBox.style.display='none'; return; }
-    const matches = Object.keys(cities).filter(c=>cities[c].name.toLowerCase().includes(val));
-    if(matches.length){
-        matches.forEach(m=>{
+// اختصارات الاقتراحات عند الكتابة
+$('citySearch').addEventListener('input',()=>{
+    const val = $('citySearch').value.trim().toLowerCase();
+    const sug = $('suggestions');
+    sug.innerHTML = '';
+    if(val===''){ sug.style.display='none'; return; }
+    Object.keys(cities).forEach(k=>{
+        if(cities[k].name.toLowerCase().includes(val)){
             const div = document.createElement('div');
-            div.textContent = cities[m].name;
-            div.onclick = ()=>{ runCity(m); suggestionsBox.style.display='none'; searchInput.value=''; }
-            suggestionsBox.appendChild(div);
-        });
-        suggestionsBox.style.display='block';
-    }else{ suggestionsBox.style.display='none'; }
+            div.textContent = cities[k].name;
+            div.onclick = ()=>{ $('citySearch').value=cities[k].name; runCity(k); sug.style.display='none'; }
+            sug.appendChild(div);
+        }
+    });
+    sug.style.display = sug.children.length ? 'block':'none';
 });
 
-$('searchBtn').addEventListener('click',()=>{ 
-    const val = searchInput.value.trim().toLowerCase();
-    const match = Object.keys(cities).find(c=>cities[c].name.toLowerCase() === val);
-    if(match){ runCity(match); searchInput.value=''; suggestionsBox.style.display='none'; }
-    else{ showError('المنطقة غير موجودة'); }
-});
-
-// تحميل تلقائي للمدينة الرئيسية
+// تحميل البيانات المبدئية لمعان
 runCity('Maan');
 </script>
-
 </body>
 </html>
