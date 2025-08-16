@@ -124,6 +124,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
     <div id="suggestions" class="search-suggestions" style="display:none;"></div>
   </div>
 
+  <!-- اختصارات المناطق الجنوبية -->
   <div class="shortcuts">
     <div class="shortcut" onclick="runCity('Maan')">معان</div>
     <div class="shortcut" onclick="runCity('Karak')">الكرك</div>
@@ -165,7 +166,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
       <div class="days" id="days"></div>
 
       <h3 style="margin-top:20px;">الرسم البياني لدرجات الحرارة</h3>
-      <canvas id="tempChart" style="height:120px;"></canvas>
+      <canvas id="tempChart" height="150"></canvas>
     </section>
   </div>
 
@@ -180,6 +181,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+
 function showSpinner(){ $('temp').innerHTML='<div class="spinner"></div>'; $('errorBox').innerHTML=''; }
 function showError(msg){ $('errorBox').innerHTML=`<div class="error">${msg}</div>`; }
 
@@ -188,7 +190,8 @@ const cities = {
   'Tafileh': {lat:30.85, lon:35.56, name:'الطفيلة', elevation:970},
   'Aqaba': {lat:29.53, lon:35.01, name:'العقبة', elevation:5},
   'Karak': {lat:31.18, lon:35.70, name:'الكرك', elevation:900},
-  'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال', elevation:935}
+  'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال', elevation:935},
+  'Fairbanks': {lat:64.8378, lon:-147.7164, name:'فيربانكس', elevation:132}
 };
 
 const alertDefinitions = [
@@ -278,7 +281,6 @@ function renderWeather(city,data){
     $('sunset').textContent = data.daily.sunset[0].split("T")[1];
     $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0]) + "°C";
     $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0]) + "°C";
-
     $('advice').textContent = adviceTexts[cw.weathercode] || 'تمتع بيومك!';
 
     const daysBox = $('days');
@@ -295,7 +297,8 @@ function renderWeather(city,data){
           <div>${dayName}</div>
           <div>${max}° / ${min}°</div>
         </div>`;
-    }// الرسم البياني لدرجات الحرارة
+    }
+
     const ctx = $('tempChart').getContext('2d');
     if(window.tempChartInstance) window.tempChartInstance.destroy();
     window.tempChartInstance = new Chart(ctx,{
@@ -303,39 +306,34 @@ function renderWeather(city,data){
         data:{
             labels:data.daily.time.map(d=>new Date(d).toLocaleDateString('ar',{weekday:'short'})),
             datasets:[
-                {
-                    label:'درجة الحرارة العليا °C',
-                    data:data.daily.temperature_2m_max,
-                    borderColor:'#10b981',
-                    backgroundColor:'rgba(16,185,129,0.2)',
-                    tension:0.4,
-                    fill:true,
-                    pointRadius:4
-                },
-                {
-                    label:'درجة الحرارة الدنيا °C',
-                    data:data.daily.temperature_2m_min,
-                    borderColor:'#3b82f6',
-                    backgroundColor:'rgba(59,130,246,0.2)',
-                    tension:0.4,
-                    fill:true,
-                    pointRadius:4
-                }
+              {
+                label:'أعلى درجة °C',
+                data:data.daily.temperature_2m_max,
+                borderColor:'#10b981',
+                backgroundColor:'rgba(16,185,129,0.2)',
+                tension:0.4,
+                fill:true,
+                pointRadius:5
+              },
+              {
+                label:'أدنى درجة °C',
+                data:data.daily.temperature_2m_min,
+                borderColor:'#3b82f6',
+                backgroundColor:'rgba(59,130,246,0.2)',
+                tension:0.4,
+                fill:true,
+                pointRadius:5
+              }
             ]
         },
         options:{
             responsive:true,
-            plugins:{
-                legend:{display:true, position:'top'}
-            },
-            scales:{
-                y:{beginAtZero:false}
-            }
+            plugins:{ legend:{display:true} },
+            scales:{ y:{beginAtZero:false} }
         }
     });
 }
 
-// البحث والاقتراحات
 const searchInput = $('citySearch');
 const suggestionsBox = $('suggestions');
 
