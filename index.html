@@ -166,7 +166,7 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
       <div class="days" id="days"></div>
 
       <h3 style="margin-top:20px;">الرسم البياني لدرجات الحرارة</h3>
-      <canvas id="tempChart" height="150"></canvas>
+      <canvas id="tempChart" height="120"></canvas>
     </section>
   </div>
 
@@ -191,7 +191,8 @@ const cities = {
   'Aqaba': {lat:29.53, lon:35.01, name:'العقبة', elevation:5},
   'Karak': {lat:31.18, lon:35.70, name:'الكرك', elevation:900},
   'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال', elevation:935},
-  'Fairbanks': {lat:64.8378, lon:-147.7164, name:'فيربانكس', elevation:132}
+  'Fairbanks': {lat:64.8378, lon:-147.7164, name:'فيربانكس', elevation:136},
+  'Andes': {lat:-32.6532, lon:-70.0119, name:'جبال الأنديز', elevation:4000}
 };
 
 const alertDefinitions = [
@@ -281,6 +282,7 @@ function renderWeather(city,data){
     $('sunset').textContent = data.daily.sunset[0].split("T")[1];
     $('temp_max').textContent = Math.round(data.daily.temperature_2m_max[0]) + "°C";
     $('temp_min').textContent = Math.round(data.daily.temperature_2m_min[0]) + "°C";
+
     $('advice').textContent = adviceTexts[cw.weathercode] || 'تمتع بيومك!';
 
     const daysBox = $('days');
@@ -299,6 +301,7 @@ function renderWeather(city,data){
         </div>`;
     }
 
+    // الرسم البياني لدرجات الحرارة العليا والدنيا
     const ctx = $('tempChart').getContext('2d');
     if(window.tempChartInstance) window.tempChartInstance.destroy();
     window.tempChartInstance = new Chart(ctx,{
@@ -306,24 +309,24 @@ function renderWeather(city,data){
         data:{
             labels:data.daily.time.map(d=>new Date(d).toLocaleDateString('ar',{weekday:'short'})),
             datasets:[
-              {
-                label:'أعلى درجة °C',
-                data:data.daily.temperature_2m_max,
-                borderColor:'#10b981',
-                backgroundColor:'rgba(16,185,129,0.2)',
-                tension:0.4,
-                fill:true,
-                pointRadius:5
-              },
-              {
-                label:'أدنى درجة °C',
-                data:data.daily.temperature_2m_min,
-                borderColor:'#3b82f6',
-                backgroundColor:'rgba(59,130,246,0.2)',
-                tension:0.4,
-                fill:true,
-                pointRadius:5
-              }
+                {
+                    label:'الحرارة العليا °C',
+                    data:data.daily.temperature_2m_max,
+                    borderColor:'#10b981',
+                    backgroundColor:'rgba(16,185,129,0.2)',
+                    tension:0.4,
+                    fill:true,
+                    pointRadius:4
+                },
+                {
+                    label:'الحرارة الدنيا °C',
+                    data:data.daily.temperature_2m_min,
+                    borderColor:'#3b82f6',
+                    backgroundColor:'rgba(59,130,246,0.2)',
+                    tension:0.4,
+                    fill:true,
+                    pointRadius:4
+                }
             ]
         },
         options:{
@@ -334,6 +337,7 @@ function renderWeather(city,data){
     });
 }
 
+// البحث والاقتراحات
 const searchInput = $('citySearch');
 const suggestionsBox = $('suggestions');
 
