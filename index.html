@@ -124,14 +124,25 @@ footer{margin:26px 0;color:var(--muted);text-align:center}
     <div id="suggestions" class="search-suggestions" style="display:none;"></div>
   </div>
 
-  <!-- اختصارات المناطق الجنوبية -->
-  <div class="shortcuts">
-    <div class="shortcut" onclick="runCity('Maan')">معان</div>
-    <div class="shortcut" onclick="runCity('Karak')">الكرك</div>
-    <div class="shortcut" onclick="runCity('Tafileh')">الطفيلة</div>
-    <div class="shortcut" onclick="runCity('Aqaba')">العقبة</div>
-    <div class="shortcut" onclick="runCity('HusseinUni')">جامعة الحسين بن طلال</div>
-  </div>
+  <!-- قسم الاختصارات -->
+  <aside class="card" style="margin-top:18px;">
+    <h3>اختصارات المناطق الجنوبية</h3>
+    <div class="shortcuts">
+      <div class="shortcut" onclick="runCity('Maan')">معان</div>
+      <div class="shortcut" onclick="runCity('Karak')">الكرك</div>
+      <div class="shortcut" onclick="runCity('Tafileh')">الطفيلة</div>
+      <div class="shortcut" onclick="runCity('Aqaba')">العقبة</div>
+    </div>
+
+    <h3 style="margin-top:20px;">🏫 اختصارات الجامعات</h3>
+    <div class="shortcuts">
+      <div class="shortcut" onclick="runCity('HusseinUni')">جامعة الحسين بن طلال</div>
+      <div class="shortcut" onclick="runCity('MutahUni')">جامعة مؤتة</div>
+      <div class="shortcut" onclick="runCity('TafilaTech')">جامعة الطفيلة التقنية</div>
+      <div class="shortcut" onclick="runCity('JU_Aqaba')">الأردنية - فرع العقبة</div>
+      <div class="shortcut" onclick="runCity('JAMS')">الأكاديمية البحرية - العقبة</div>
+    </div>
+  </aside>
 
   <div class="grid">
     <aside class="card">
@@ -191,11 +202,13 @@ const cities = {
   'Aqaba': {lat:29.53, lon:35.01, name:'العقبة', elevation:5},
   'Karak': {lat:31.18, lon:35.70, name:'الكرك', elevation:900},
   'HusseinUni': {lat:30.1949, lon:35.736, name:'جامعة الحسين بن طلال', elevation:935},
+  'MutahUni': {lat:31.16, lon:35.75, name:'جامعة مؤتة', elevation:940},
+  'TafilaTech': {lat:30.835, lon:35.604, name:'جامعة الطفيلة التقنية', elevation:950},
+  'JU_Aqaba': {lat:29.533, lon:35.001, name:'الجامعة الأردنية - فرع العقبة', elevation:10},
+  'JAMS': {lat:29.531, lon:35.006, name:'الأكاديمية الأردنية للدراسات البحرية - العقبة', elevation:8},
   'Fairbanks': {lat:64.8378, lon:-147.7164, name:'فيربانكس', elevation:136},
   'Andes': {lat:-32.6532, lon:-70.0119, name:'جبال الأنديز', elevation:4000}
-};
-
-const alertDefinitions = [
+};const alertDefinitions = [
   {code:[0,1], icon:'☀', class:'alert-sunny', text:'مشمس — الطقس صافي'},
   {code:[2,3], icon:'☁', class:'alert-cloudy', text:'غائم — غيوم جزئية أو كاملة'},
   {code:[45,48], icon:'🌫', class:'alert-dust', text:'مغبر/ضباب — رؤية منخفضة'},
